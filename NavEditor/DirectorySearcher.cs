@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Linq;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 namespace NavEditor
 {
@@ -12,6 +13,11 @@ namespace NavEditor
         private List<string> Directories { get; set; }
 
         private readonly string filename;
+
+        public bool IsReady
+        {
+            get => Directories.Count != 0;
+        }
 
         public DirectorySearcher(string indexfile)
         {
@@ -44,28 +50,32 @@ namespace NavEditor
             }
         }
 
-        public void IndexDir(string path, bool writefile = true, bool clearindex = false)
+        public async Task IndexDir(string path, bool writefile = true, bool clearindex = false, bool forceindex = false)
         {
-            if (File.Exists(filename))
+            await Task.Run(async () =>
             {
-                Directories = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(filename));
-                return;
-            }
+                if (File.Exists(filename) && !forceindex)
+                {
+                    Directories = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(filename));
+                    return;
+                }
 
-            if (clearindex) Directories.Clear();
-            var dirs = Directory.GetDirectories(path).ToList().Where(d => !d.EndsWith(".git") && !d.EndsWith("[-]")).ToList();
-            Directories.AddRange(dirs.Where(d => File.Exists(d + @"\apt.dat")));
-            
-            foreach (var d in dirs)
-            {
-                IndexDir(d, false);
-            }
+                if (clearindex || (forceindex && writefile)) Directories.Clear();
+                var dirs = Directory.GetDirectories(path).ToList().Where(d => !d.EndsWith(".git") && !d.EndsWith("[-]")).ToList();
+                var toAdd = dirs.Where(d => File.Exists(d + @"\apt.dat"));
+                Directories.AddRange(toAdd);
 
-            if (writefile)
-            {
-                File.Create(filename).Close();
-                File.WriteAllText(filename, JsonConvert.SerializeObject(Directories, Formatting.Indented));
-            }
+                foreach (var d in dirs)
+                {
+                    await IndexDir(d, false, forceindex: true);
+                }
+
+                if (writefile)
+                {
+                    if (!File.Exists(filename)) File.Create(filename).Close();
+                    File.WriteAllText(filename, JsonConvert.SerializeObject(Directories));
+                }
+            });
         }
     }
 }
