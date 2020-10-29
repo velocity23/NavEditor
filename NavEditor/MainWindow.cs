@@ -155,6 +155,7 @@ namespace NavEditor
             {
                 runwayends.AddRange(r.Ends);
             }
+            AppRwyBox.Items.Clear();
             AppRwyBox.Items.AddRange(runwayends.ToArray());
             AppRwyBox.SelectedItem = runwayends.FirstOrDefault(re => re.Ident == CurrentLoc.Runway);
             
