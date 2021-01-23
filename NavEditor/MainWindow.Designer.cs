@@ -268,7 +268,7 @@
             this.NavDirBtn.TabIndex = 7;
             this.NavDirBtn.Text = "Navigation Folder";
             this.NavDirBtn.UseVisualStyleBackColor = true;
-            this.NavDirBtn.Click += new System.EventHandler(this.LocFileBtn_Click);
+            this.NavDirBtn.Click += new System.EventHandler(this.NavDirBtn_Click);
             // 
             // aptDirDialog
             // 

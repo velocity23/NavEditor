@@ -76,16 +76,9 @@ namespace NavEditor
             else
             {
                 Configuration = JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(ConfigFilePath));
-                AptDirBtn.Enabled = false;
-                NavDirBtn.Enabled = false;
-                if (string.IsNullOrEmpty(Configuration.AirportsDir))
-                {
-                    AptDirBtn.Enabled = true;
-                }
 
                 if (string.IsNullOrEmpty(Configuration.NavigationDir))
                 {
-                    NavDirBtn.Enabled = true;
                     Localizers = new List<Localizer>();
                     Glideslopes = new List<Glideslope>();
                 }
@@ -185,11 +178,11 @@ namespace NavEditor
             var currentRwy = CurrentApt.Runways.FirstOrDefault(r => r.Ends.Contains(selectedEnd));
             if (currentRwy.End1 == selectedEnd)
             {
-                CurrentLoc.Bearing = Math.Round(currentRwy.Bearing1, 2);
+                CurrentLoc.Bearing = Math.Round(currentRwy.Bearing1, 3);
             }
             else
             {
-                CurrentLoc.Bearing = Math.Round(currentRwy.Bearing2, 2);
+                CurrentLoc.Bearing = Math.Round(currentRwy.Bearing2, 3);
             }
 
             if (CurrentGs != null)
@@ -197,13 +190,13 @@ namespace NavEditor
                 CurrentGs.Elevation = CurrentApt.Elevation;
                 CurrentGs.Frequency = (int)(AppFreqBox.Value * 1000);
                 CurrentGs.Identifier = AppIdentBox.Text;
-                CurrentGs.Latitude = Math.Round(selectedEnd.Latitude, 6);
-                CurrentGs.Longitude = Math.Round(selectedEnd.Longitude, 6);
+                CurrentGs.Latitude = selectedEnd.Latitude;
+                CurrentGs.Longitude = selectedEnd.Longitude;
                 CurrentGs.Runway = selectedEnd.Ident;
                 CurrentGs.Bearing = CurrentLoc.Bearing;
 
                 var slopeBearing = (CurrentGs.Bearing * 1000).ToString();
-                if (slopeBearing.Length == 5) slopeBearing = "0" + slopeBearing;
+                if (slopeBearing.Split('.')[0].Length == 2) slopeBearing = $"0{slopeBearing}";
                 CurrentGs.Slope = double.Parse(AppGpBox.Value.ToString() + slopeBearing);
             }
 
@@ -269,13 +262,15 @@ namespace NavEditor
                 await searcher.IndexDir(AirportsFolder, forceindex: true);
                 MessageLabel.Text = "Welcome to NavEditor!";
                 MessageBox.Show("Success!", "NavEditor");
+                AptDirBtn.Enabled = true;
                 AirportText.Enabled = true;
                 ApproachSelect.Enabled = true;
             }
         }
 
-        private void LocFileBtn_Click(object sender, EventArgs e)
+        private void NavDirBtn_Click(object sender, EventArgs e)
         {
+            NavDirBtn.Enabled = false;
             var result = navDirDialog.ShowDialog();
             if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(navDirDialog.SelectedPath))
             {
@@ -286,7 +281,7 @@ namespace NavEditor
                     return;
                 }
                 NavigationFolder = navDirDialog.SelectedPath;
-                NavDirBtn.Enabled = false;
+                NavDirBtn.Enabled = true;
                 MessageLabel.Text = "Loading Approaches...";
                 Localizers = JsonConvert.DeserializeObject<List<Localizer>>(File.ReadAllText(NavigationFolder + @"\LOC.json"));
                 Glideslopes = JsonConvert.DeserializeObject<List<Glideslope>>(File.ReadAllText(NavigationFolder + @"\Glideslope.json"));
@@ -305,6 +300,7 @@ namespace NavEditor
                 MessageLabel.Text = "Loading Airports...";
                 await searcher.IndexDir(AirportsFolder, forceindex: true);
                 MessageLabel.Text = "Welcome to NavEditor!";
+                AirportText.Focus();
                 AirportText.Enabled = true;
                 ApproachSelect.Enabled = true;
                 RefreshAirports.Enabled = true;
@@ -319,6 +315,7 @@ namespace NavEditor
             MessageLabel.Text = "Welcome to NavEditor!";
             RefreshAirports.Enabled = true;
             AirportText.Enabled = true;
+            AirportText.Focus();
             ApproachSelect.Enabled = true;
         }
 
