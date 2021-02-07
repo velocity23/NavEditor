@@ -195,8 +195,8 @@ namespace NavEditor
                 CurrentGs.Runway = selectedEnd.Ident;
                 CurrentGs.Bearing = CurrentLoc.Bearing;
 
-                var slopeBearing = (CurrentGs.Bearing * 1000).ToString();
-                if (slopeBearing.Split('.')[0].Length == 2) slopeBearing = $"0{slopeBearing}";
+                var slopeBearing = CurrentGs.Bearing.ToString();
+                if (slopeBearing.Split('.')[0].Length < 3) slopeBearing = $"0{double.Parse(slopeBearing) * 1000}";
                 CurrentGs.Slope = double.Parse(AppGpBox.Value.ToString() + slopeBearing);
             }
 
